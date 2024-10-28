@@ -4,6 +4,7 @@ let attack3= false
 let attack4 = false 
 let attackTrue = false 
 let healthValue = 1000
+let gameOver = false 
 
  function setup() {
   createCanvas(800, 800);
@@ -28,8 +29,8 @@ playeroptions(350,600)
 drawCharacters(xPosCharacter, yPosCharcter, xPosCharacter2, yPosCharacter2)
 // Drawing the healthbars 
 healthBar(xPosCharacter, yPosCharcter, xPosCharacter2, yPosCharacter2)
-displayMouseCoordinates()
 damage()
+checkGameOver()
 }
 // Function to create player attacks 
 function playeroptions(xpos,ypos){
@@ -74,22 +75,30 @@ function damage() {
     console.log(damageNumber)
     attackTrue = false 
     healthValue = healthValue - damageNumber
-    if (healthValue <0) { 
-      healthValue = 0
     }
     console.log(healthValue)
   }
+
+function checkGameOver() { 
+  if (healthValue <0) { 
+      push()
+      background(0)
+      textSize(25)
+      fill(255)
+      strokeWeight(25)
+      text("YOU WON !", width/2, height/2 )
+      pop()
+      noLoop()
 }
+}
+
   
-function displayMouseCoordinates() {
-  push()
-  fill(0);
-  text("X: " + mouseX + " | Y: " + mouseY, 10, height - 20);
-  pop()
-}
+// function displayMouseCoordinates() {
+//   push()
+//   fill(0);
+//   text("X: " + mouseX + " | Y: " + mouseY, 10, height - 20);
+//   pop()
+// }
 
 
-function healthSubtractor() { 
-
-}
 
