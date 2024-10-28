@@ -26,11 +26,13 @@ playeroptions(350,600)
 drawCharacters(xPosCharacter, yPosCharcter, xPosCharacter2, yPosCharacter2)
 // Drawing the healthbars 
 healthBar(xPosCharacter, yPosCharcter, xPosCharacter2, yPosCharacter2)
-
+displayMouseCoordinates()
+trueOrFalse()
 }
 // Function to create player attacks 
 function playeroptions(xpos,ypos){
-  rect(xpos,ypos,250,50,50)
+  rect(xpos,ypos,250,50,5)
+
 }
   // Function to draw characters 
 function drawCharacters(xPosC1, yPosC1, xPosc2, yPosC2) { 
@@ -38,7 +40,7 @@ function drawCharacters(xPosC1, yPosC1, xPosc2, yPosC2) {
   rect(xPosc2, yPosC2, 200, 200 )
 
 }
-//function to draw helth bar above characters 
+//function to draw health bar above characters 
 function healthBar(xPos,yPos, xPos2, yPos2){
   push()
   textSize(20)
@@ -54,13 +56,28 @@ function healthBar(xPos,yPos, xPos2, yPos2){
   pop()
 }
   
+function mouseClicked() { 
+  if (mouseX>50 && mouseX<300 && mouseY>600 && mouseX<650) { 
+    attack1=!attack1
+  }
+}
   
-// function buttonattack1(){ 
-//   if(x=
-// }
-//  our attacks 
-// function attack1(){
-//   if (attack1 = true ) { 
-// }
+function trueOrFalse() { 
+  if (attack1==true) { 
+    console.log("true")
+  }
 
+}
+
+
+function displayMouseCoordinates() {
+  push()
+  fill(0);
+  text("X: " + mouseX + " | Y: " + mouseY, 10, height - 20);
+  pop()
+}
+// function attack1(){ 
+//   if(attack= true){
+
+// }
 
