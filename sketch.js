@@ -74,9 +74,9 @@ function damage() {
     console.log(damageNumber)
     attackTrue = false 
     healthValue = healthValue - damageNumber
-    // if (healthValue >0) { 
-    //   healthValue 
-    // }
+    if (healthValue <0) { 
+      healthValue = 0
+    }
     console.log(healthValue)
   }
 }
