@@ -1,142 +1,282 @@
-let attack = []
-let attackUsed = []
-let opponentAttacks = []
-let healthValue = 1000;
-let healthValueMe = 1000
-let gameOver = false;
-let myTurn = true 
-let numOfAttacks = 4
-function setup() {
-  createCanvas(800, 800);
-  // Create 4 Variables for 4 attacks 
-  for(i=0;i<numOfAttacks;i++) {
-    attack[i] = false
-    opponentAttacks[i] = i+1*100
+// Character Class
+class Character {
+  constructor(x, y, health) {
+    this.x = x;
+    this.y = y;
+    this.health = health;
   }
-  for (i=0;i<numOfAttacks;i++) { 
-    attackUsed[i] = false
+
+  draw() {
+    rect(this.x, this.y, 200, 200); // Draw character
+    this.drawHealthBar();
+  }
+
+  drawHealthBar() {
+    push();
+    fill(255, 0, 0);
+    textSize(20);
+    text(`Health = ${this.health}`, this.x + 50, this.y - 30);
+    rect(this.x + 45, this.y - 25, map(this.health, 0, 1000, 0, 100), 20, 10); // Dynamic health bar
+    pop();
+  }
+
+  takeDamage(amount) {
+    this.health = max(0, this.health - amount); // Ensure health does not go below zero
   }
 }
-// Variables for "Characters"
 
-let xPosCharacter = 80;
-let yPosCharcter = 350;
-let xPosCharacter2 = xPosCharacter + 400;
-let yPosCharacter2 = yPosCharcter - 250;
+// Attack Class
+class Attack {
+  constructor(damageRange, x, y) {
+    this.damageRange = damageRange;
+    this.x = x;
+    this.y = y;
+    this.width = 250;
+    this.height = 50;
+  }
+
+  use() {
+    return round(random(this.damageRange[0], this.damageRange[1]));
+  }
+
+  displayButton() {
+    rect(this.x, this.y, this.width, this.height, 5);
+  }
+
+  isClicked(mx, my) {
+    return (
+      mx > this.x &&
+      mx < this.x + this.width &&
+      my > this.y &&
+      my < this.y + this.height
+    );
+  }
+}
+
+// Game Class
+class Game {
+  constructor() {
+    this.player = new Character(80, 350, 1000);
+    this.opponent = new Character(480, 100, 1000);
+    this.attacks = [
+      new Attack([300, 500], 50, 700),
+      new Attack([300, 500], 50, 600),
+      new Attack([20, 100], 350, 700),
+      new Attack([20, 100], 350, 600),
+    ];
+    this.myTurn = true;
+    this.gameOver = false;
+  }
+
+  display() {
+    if (this.gameOver) return this.displayGameOver();
+
+    // Display characters
+    this.player.draw();
+    this.opponent.draw();
+
+    // Display attack options
+    for (let i = 0; i < this.attacks.length; i++) {
+      this.attacks[i].displayButton();
+    }
+
+    this.displayTurn();
+    this.displayMouseCoordinates();
+  }
+
+  playerAttack(index) {
+    if (!this.myTurn || this.gameOver) return;
+
+    const damage = this.attacks[index].use();
+    this.opponent.takeDamage(damage);
+
+    // Immediately check for game over after the attack
+    if (this.opponent.health <= 0) {
+      this.checkGameOver();
+      return;
+    }
+
+    this.myTurn = false;
+
+    setTimeout(() => this.opponentTurn(), 5000); // 5-second delay
+  }
+
+  opponentTurn() {
+    if (this.myTurn || this.gameOver) return;
+
+    const damage = random([100, 200, 300, 400]);
+    this.player.takeDamage(damage);
+
+    this.myTurn = true;
+    this.checkGameOver();
+  }
+
+  checkGameOver() {
+    if (this.opponent.health <= 0 || this.player.health <= 0) {
+      this.gameOver = true;
+    }
+  }
+
+  displayGameOver() {
+    push();
+    background(0);
+    fill(255);
+    textSize(25);
+    textAlign(CENTER, CENTER);
+    text(
+      this.player.health <= 0 ? "YOU LOST!" : "YOU WON!",
+      width / 2,
+      height / 2
+    );
+    pop();
+
+    // Reset game state after 3 seconds and return to the map scene
+    setTimeout(() => {
+      this.resetGame();
+      scene.sceneActive = true; // Switch back to the map scene
+    }, 3000); // 3-second delay before returning to map scene
+  }
+
+  resetGame() {
+    this.player.health = 1000;
+    this.opponent.health = 1000;
+    this.myTurn = true;
+    this.gameOver = false;
+  }
+
+  displayMouseCoordinates() {
+    push();
+    fill(0);
+    text(`X: ${mouseX} | Y: ${mouseY}`, 10, height - 20);
+    pop();
+  }
+
+  displayTurn() {
+    push();
+    textSize(30);
+    text(this.myTurn ? "Your Turn" : "Opponent's Turn", 480, 370);
+    pop();
+  }
+}
+
+function mouseClicked() {
+  if (game.myTurn && !scene.sceneActive) {
+    for (let i = 0; i < game.attacks.length; i++) {
+      if (game.attacks[i].isClicked(mouseX, mouseY)) {
+        game.playerAttack(i);
+        break;
+      }
+    }
+  }
+}
+
+class Player {
+  constructor(xPos, yPos, size) {
+    this.xPos = xPos;
+    this.yPos = yPos;
+    this.size = size;
+    this.speed = 1.5; // Speed Movement
+    this.collision = false;
+  }
+
+  draw() {
+    square(this.xPos, this.yPos, this.size);
+  }
+
+  update() {
+    if (keyIsDown(87)) {
+      // 'W' key (move up)
+      this.yPos -= this.speed;
+    }
+    if (keyIsDown(83)) {
+      // 'S' key (move down)
+      this.yPos += this.speed;
+    }
+    if (keyIsDown(65)) {
+      // 'A' key (move left)
+      this.xPos -= this.speed;
+    }
+    if (keyIsDown(68)) {
+      // 'D' key (move right)
+      this.xPos += this.speed;
+    }
+  }
+
+  checkCollision(opponent) {
+    // Check if player's bounding box intersects with opponent's bounding box
+    if (
+      this.xPos < opponent.xPos + opponent.size &&
+      this.xPos + this.size > opponent.xPos &&
+      this.yPos < opponent.yPos + opponent.size &&
+      this.yPos + this.size > opponent.yPos
+    ) {
+      this.collision = true;
+      return true;
+    }
+    return false;
+  }
+}
+
+class Opponent {
+  constructor(xPos, yPos, size) {
+    this.xPos = xPos;
+    this.yPos = yPos;
+    this.size = size;
+  }
+
+  draw() {
+    square(this.xPos, this.yPos, this.size);
+    line(0, this.yPos + this.size, width, this.yPos + this.size);
+  }
+}
+
+class ShowMap {
+  constructor() {
+    this.player = new Player(200, 20, 20);
+    this.opponents = [
+      new Opponent(50, 100, 20),
+      new Opponent(50, 200, 20),
+      new Opponent(50, 300, 20),
+      new Opponent(50, 400, 20),
+      new Opponent(50, 500, 20),
+      new Opponent(50, 600, 20),
+      new Opponent(50, 700, 20),
+    ];
+    this.sceneActive = true; // Track if the map scene is active
+  }
+
+  display() {
+    if (!this.sceneActive) return; // Exit if collision detected and scene is inactive
+
+    this.player.draw();
+    this.player.update();
+    for (let i = 0; i < this.opponents.length; i++) {
+      this.opponents[i].draw();
+      if (this.player.checkCollision(this.opponents[i])) {
+        console.log("Collision detected with " + i);
+        this.sceneActive = false; // Stop showing map on collision
+        break;
+      } else {
+        console.log("No collision detected");
+      }
+    }
+  }
+}
+
+let scene;
+let game;
+
+function setup() {
+  createCanvas(800, 800);
+  scene = new ShowMap();
+  game = new Game();
+}
 
 function draw() {
   background(225);
-  // Widgets for attacks
-  playeroptions(50, 700);
-  playeroptions(50, 600);
-  playeroptions(350, 700);
-  playeroptions(350, 600);
-  // Drawing the characters
-  drawCharacters(xPosCharacter, yPosCharcter, xPosCharacter2, yPosCharacter2);
-  // Drawing the healthbars
-  healthBar(xPosCharacter, yPosCharcter, xPosCharacter2, yPosCharacter2);
-  damage();
-  checkGameOver();
-  displayMouseCoordinates()
-  displayTurn()
-}
-// Function to create player attacks
-function playeroptions(xpos, ypos) {
-  rect(xpos, ypos, 250, 50, 5);
-}
-// Function to draw characters
-function drawCharacters(xPosC1, yPosC1, xPosc2, yPosC2) {
-  rect(xPosC1, yPosC1, 200, 200);
-  rect(xPosc2, yPosC2, 200, 200);
-}
-//function to draw health bar above characters
-function healthBar(xPos, yPos, xPos2, yPos2) {
-  push();
-  textSize(20);
-  fill(255, 0, 0);
-  strokeWeight(20);
-  text("Health Bar = " + healthValueMe, xPos + 50, yPos - 30);
-  text("Health Bar = " + healthValue, xPos2 + 50, yPos2 - 30);
-  pop();
-  push();
-  fill(255, 0, 0);
-  rect(xPos + 45, yPos - 25, 100, 20, 10);
-  rect(xPos2 + 45, yPos2 - 25, 100, 20, 10);
-  pop();
-}
-// Function to check the attack used
-function mouseClicked() {
-  if (mouseX > 50 && mouseX < 300 && mouseY > 600 && mouseX < 650 && myTurn== true) {
-    attackUsed[0] = true;
-    myTurn = false 
-    //Opponents turn with a delay 
-    setTimeout(opponentsTurn, 5000); // 5 second delay 
+  if (scene.sceneActive) {
+    scene.display(); // Display map scene if active
   } else {
-    attackUsed[0] = false;
+    game.display(); // Display battle scene if collision occurred
   }
-}
-// Function to record the attack damage
-function damage() {
-  if (attackUsed[0] == true) {
-    damageNumber = round(random(20, 100));
-    attackUsed[0] = false;
-    healthValue = healthValue - damageNumber;
-  } 
-}
-//Functino once battle lost or won
-function checkGameOver() {
-  if (healthValue < 0) {
-    push();
-    background(0);
-    textSize(25);
-    fill(255);
-    strokeWeight(25);
-    text("YOU WON !", width / 2, height / 2);
-    pop();
-    noLoop()
-  } else if(healthValueMe <0) { 
-    push();
-    background(0);
-    textSize(25);
-    fill(255);
-    strokeWeight(25);
-    text("YOU LOST!", width / 2, height / 2);
-    pop();
-    noLoop()
-
-  }
-}
-
-// Function to record opponents attack 
-function opponentsTurn () { 
-if (myTurn == false) {
-  opponentDamage = random(opponentAttacks)
-  myTurn = true
-  healthValueMe = healthValueMe - opponentDamage
-} 
-}
-
-
-
-function displayMouseCoordinates() {
-  push();
-  fill(0);
-  text("X: " + mouseX + " | Y: " + mouseY, 10, height - 20);
-  pop();
-}
-// Function to show who's turn it is 
-function displayTurn() { 
-if (myTurn == true) { 
-  push()
-  textSize(30)
-  strokeWeight(30)
-  text("Your Turn", 480, 370); 
-  pop()
-} else if (myTurn == false) { 
-  push()
-  textSize(30)
-  strokeWeight(10)
-  text("Opponents Turn", 480,370)
-  pop()
-}
 }
